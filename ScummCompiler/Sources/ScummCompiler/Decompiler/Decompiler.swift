@@ -44,7 +44,24 @@ public struct Decompilation {
     let opcode: any Opcode
     
     /// The constant values associated with the instruction.
-    var constant: [UInt8: Value]? = nil
+    let constant: [UInt8: Value]?
+    
+    /// The memory slot or index used by the instruction, if applicable.
+    let slot: UInt8?
+    
+    /// Initializes a new decompilation entry.
+    ///
+    /// - Parameters:
+    ///   - offset: The offset of the instruction in the bytecode chunk.
+    ///   - opcode: The opcode of the instruction.
+    ///   - constant: The constant value associated with the instruction, if applicable.
+    ///   - slot: The memory slot used by the instruction, if applicable.
+    init(offset: Int, opcode: any Opcode, constant: [UInt8 : Value]? = nil, slot: UInt8? = nil) {
+        self.offset = offset
+        self.opcode = opcode
+        self.constant = constant
+        self.slot = slot
+    }
 }
 
 /// A base class for decompilers.
@@ -234,6 +251,8 @@ extension BaseDecompiler {
             default:
                 output += " \(key) '\(value)'"
             }
+        } else if let slot = instruction.slot {
+            output += " \(slot)"
         }
         
         output += "\n"

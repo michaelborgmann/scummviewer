@@ -1,7 +1,4 @@
-var x;
-x = 10;
-print x;
-var y = 20;
-print 20;
-x = 30;
-print x + y;
+{
+    var a = 5;
+    a = 10;
+}

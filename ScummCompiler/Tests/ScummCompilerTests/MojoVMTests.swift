@@ -376,6 +376,55 @@ final class MojoVMTests: XCTestCase {
         }
     }
     
+    func testGetLocal() throws {
+        // Prepare the local variables
+        try chunk.write(byte: MojoOpcode.constant.rawValue, line: 1)
+        var constant = chunk.addConstant(value: .int(42))  // Pushing an integer constant
+        try chunk.write(byte: UInt8(constant), line: 1)
+        try chunk.write(byte: MojoOpcode.setLocal.rawValue, line: 1)
+        
+        // Now retrieve the local variable
+        try chunk.write(byte: MojoOpcode.getLocal.rawValue, line: 1)
+        
+        XCTAssertNoThrow(try virtualMachine.interpret(chunk: chunk))
+        XCTAssertEqual(virtualMachine.stackTop, 1)
+        
+        if case let .int(value) = try virtualMachine.pop() {
+            XCTAssertEqual(value, 42)
+        } else {
+            XCTFail("Expected integer value from getLocal.")
+        }
+    }
+    
+    func testSetLocal() throws {
+        // First, load the constant value 5 onto the stack
+        try chunk.write(byte: MojoOpcode.constant.rawValue, line: 1)
+        var constant = chunk.addConstant(value: .int(5))  // Load constant 5
+        try chunk.write(byte: UInt8(constant), line: 1)
+        
+        // Then, load the constant value 10 onto the stack
+        try chunk.write(byte: MojoOpcode.constant.rawValue, line: 1)
+        constant = chunk.addConstant(value: .int(10))  // Load constant 10
+        try chunk.write(byte: UInt8(constant), line: 1)
+        
+        // Now, set the local variable (slot 0) with the value 10
+        try chunk.write(byte: MojoOpcode.setLocal.rawValue, line: 1)
+
+        // Pop the value from the stack after setting it to the local variable
+        try chunk.write(byte: MojoOpcode.pop.rawValue, line: 1)
+
+        // Execute the bytecode and verify the result
+        XCTAssertNoThrow(try virtualMachine.interpret(chunk: chunk))
+        XCTAssertEqual(virtualMachine.stackTop, 2)
+        
+        if case let .int(value) = try virtualMachine.pop() {
+            XCTAssertEqual(value, 10)  // The final value of 'a' should be 10
+        } else {
+            XCTFail("Expected integer value from getLocal after setLocal.")
+        }
+    }
+
+    
     #if CUSTOM_GARBAGE_COLLECTION
     func testNoObjectsInitially() throws {
         XCTAssertNil(virtualMachine.objects)

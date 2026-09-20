@@ -89,7 +89,21 @@ class Interpreter {
     ///   - statement: The statement to execute.
     /// - Throws: Any error encountered during the execution of the statement.
     internal func execute(_ statement: Statement) throws {
-        try statement.accept(visitor: self)
+        _ = try statement.accept(visitor: self)
+    }
+    
+    private func executeBlock(statements: [Statement], environment: Environment) throws {
+        
+        let previous = self.environment
+        self.environment = environment
+        
+        defer {
+            self.environment = previous
+        }
+        
+        for statement in statements {
+            try execute(statement)
+        }
     }
     
     /// Evaluates an expression within the AST.
@@ -336,5 +350,12 @@ extension Interpreter: StatementVisitor {
     /// - Throws: Any error encountered while evaluating the expression.
     func visitExpressionStmt(_ stmt: ExpressionStmt) throws -> Any? {
         try evaluate(stmt.expression)
+    }
+    
+    func visitBlockStmt(_ stmt: BlockStatement) throws -> Any? {
+        try executeBlock(
+            statements: stmt.statements,
+            environment: Environment(enclosing: environment)
+        )
     }
 }

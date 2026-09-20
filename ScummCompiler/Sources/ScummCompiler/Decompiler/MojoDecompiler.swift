@@ -50,12 +50,16 @@ public class MojoDecompiler: BaseDecompiler<MojoOpcode> {
             return try simpleInstruction(opcode: .print)
         case .pop:
             return try simpleInstruction(opcode: .pop)
-        case .global:
-            return try constantInstruction(opcode: .global)
-        case .get:
-            return try constantInstruction(opcode: .get)
-        case .set:
-            return try constantInstruction(opcode: .set)
+        case .defineGlobal:
+            return try constantInstruction(opcode: .defineGlobal)
+        case .getGlobal:
+            return try constantInstruction(opcode: .getGlobal)
+        case .setGlobal:
+            return try constantInstruction(opcode: .setGlobal)
+        case .getLocal:
+            return try byteInstruction(opcode: .getLocal)
+        case .setLocal:
+            return try byteInstruction(opcode: .setLocal)
         }
     }
     
@@ -74,6 +78,30 @@ public class MojoDecompiler: BaseDecompiler<MojoOpcode> {
         }
         
         let decompilation = Decompilation(offset: offset, opcode: opcode, constant: [constant: value])
+        
+        self.offset = offset + 2
+        
+        return decompilation
+    }
+    
+    /// Handles the decompilation of a single-byte operand instruction.
+    ///
+    /// This method is used for opcodes that operate on a single-byte value, such as local variable access.
+    /// It reads the byte following the opcode and interprets it as a slot index.
+    ///
+    /// - Parameter opcode: The Mojo opcode representing a single-byte instruction.
+    /// - Returns: A `Decompilation` instance containing the decoded instruction information.
+    /// - Throws: `CompilerError.unknownIndex` if the slot index cannot be read.
+    private func byteInstruction(opcode: MojoOpcode) throws -> Decompilation {
+        
+        guard
+            let offset = offset,
+            let slot = try chunk?.read(at: offset + 1)
+        else {
+            throw CompilerError.invalidBytecodeRead(opcode: opcode.rawValue)
+        }
+        
+        let decompilation = Decompilation(offset: offset, opcode: opcode, slot: slot)
         
         self.offset = offset + 2
         

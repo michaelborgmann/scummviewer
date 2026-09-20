@@ -202,6 +202,8 @@ extension DecentParser {
         
         if match(types: [.print]) {
             return try printStatement()
+        } else if match(types: [.leftBrace]) {
+            return BlockStatement(statements: try blockStatement())
         } else {
             return try expressionStatement()
         }
@@ -279,6 +281,21 @@ extension DecentParser {
         let expression = try expression()
         _ = try consume(type: .semicolon, error: ParserError.missingSemicolon(line: peek.line))
         return ExpressionStmt(expression: expression)
+    }
+    
+    private func blockStatement() throws -> [Statement] {
+        
+        var statements: [Statement] = []
+        
+        while !check(type: .rightBrace) && !isEndOfFile {
+            if let statement = try declaration() {
+                statements.append(statement)
+            }
+        }
+        
+        _ = try consume(type: .rightBrace, error: ParserError.missingClosingBraces(line: peek.line))
+        
+        return statements
     }
 }
 

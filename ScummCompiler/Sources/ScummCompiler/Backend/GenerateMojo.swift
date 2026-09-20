@@ -285,10 +285,22 @@ class GenerateMojo: BaseCodeGenerator<MojoOpcode> {
         
         line = expression.name.line
         
-        let argument = try identifierConstant(token: expression.name)
-        try emitBytes(MojoOpcode.get.rawValue, UInt8(argument))
-        
-        return try chunk.readConstant(at: argument).asString
+        if let index = locals.lastIndex(where: { $0.name.lexeme == expression.name.lexeme }) {
+            
+            guard locals.last?.depth != nil else {
+                throw CompilerError.variableAccessInOwnInitializer(expression.name.lexeme)
+            }
+            
+            try emitBytes(MojoOpcode.getLocal.rawValue, UInt8(index))
+            return nil
+            
+        } else {
+            
+            let argument = try identifierConstant(token: expression.name)
+            try emitBytes(MojoOpcode.getGlobal.rawValue, UInt8(argument))
+            
+            return try chunk.readConstant(at: argument).asString
+        }
     }
     
     /// Visits an assignment expression and assigns a value to the variable.
@@ -303,12 +315,18 @@ class GenerateMojo: BaseCodeGenerator<MojoOpcode> {
         line = expression.name.line
         
         guard let value = expression.value else {
-            throw InterpreterError.missingOperand(type: "assignment", line: expression.name.line)
+            throw CompilerError.missingOperand(type: "assignment", line: expression.name.line)
         }
         
         let evaluatedValue = try evaluate(value)
-        let argument = try identifierConstant(token: expression.name)
-        try emitBytes(MojoOpcode.set.rawValue, UInt8(argument))
+        
+        if let argument = locals.lastIndex(where: { $0.name.lexeme == expression.name.lexeme }) {
+            try emitBytes(MojoOpcode.setLocal.rawValue, UInt8(argument))
+        } else {
+            let argument = try identifierConstant(token: expression.name)
+            try emitBytes(MojoOpcode.setGlobal.rawValue, UInt8(argument))
+        }
+        
         return evaluatedValue
     }
     
@@ -348,11 +366,83 @@ class GenerateMojo: BaseCodeGenerator<MojoOpcode> {
         
         line = stmt.name.line
         
+        if scopeDepth > 0 {
+            try handleLocalVariableDeclaration(statement: stmt)
+        } else {
+            try handleGlobalVariableDeclaration(statement: stmt)
+        }
+    }
+    
+    // MARK: Variables
+    
+    /// Pops local variables from the scope when they go out of scope.
+    ///
+    /// This method removes variables that were defined in the current scope by "popping" them off the local stack.
+    /// It ensures that the stack remains consistent with the scope depth and no unnecessary variables remain after exiting the scope.
+    /// - Throws: Will propagate any errors encountered during the emission of bytecode (if applicable).
+    override func popVariablesFromScope() throws {
+        while let lastLocalDepth = locals.last?.depth, lastLocalDepth >= scopeDepth {
+            try emitBytes(MojoOpcode.pop.rawValue)
+            locals.removeLast()
+        }
+    }
+    
+    /// Handles the declaration of a local variable, ensuring that it is not redeclared within the same scope.
+    /// Also evaluates the initializer expression and defines the variable within the local scope.
+    ///
+    /// - Parameter stmt: The variable statement to process.
+    /// - Throws: An error if variable redeclaration is detected or if initialization fails.
+    internal func handleLocalVariableDeclaration(statement stmt: VariableStatement) throws {
+        
+        try ensureNoRedeclarationInScope(stmt.name.lexeme)
+        
+        // Declare the variable in the scope
+        let local = Local(name: stmt.name)
+        locals.append(local)
+        
+        // Evaluate initializing expression if provided
+        if let expression = stmt.initializer {
+            _ = try evaluate(expression)
+        }
+        
+        // Define the variable by marking it as initialized
+        // and associating it with the current scope depth
+        if !locals.isEmpty {
+            locals[locals.count - 1].depth = scopeDepth
+        }
+    }
+    
+    /// Handles the declaration of a global variable, initializes it (if necessary),
+    /// and generates the corresponding bytecode to define the global variable.
+    ///
+    /// - Parameter stmt: The variable statement to process.
+    /// - Throws: An error if initialization fails or bytecode generation encounters an issue.
+    internal func handleGlobalVariableDeclaration(statement stmt: VariableStatement) throws {
+        
         let global = try identifierConstant(token: stmt.name)
         
         if let expression = stmt.initializer {
             _ = try evaluate(expression)
-            try emitBytes(MojoOpcode.global.rawValue, UInt8(global))
+        }
+        
+        try emitBytes(MojoOpcode.defineGlobal.rawValue, UInt8(global))
+    }
+    
+    /// Ensures that no variable with the same name exists in the current scope. If a redeclaration is found, an error is thrown.
+    ///
+    /// - Parameter name: The name of the variable to check for redeclaration.
+    /// - Throws: A `CompilerError.variableRedeclaration` error if a redeclaration is detected.
+    private func ensureNoRedeclarationInScope(_ name: String) throws {
+        
+        for local in locals.reversed() {
+            
+            if let localDepth = local.depth, localDepth < scopeDepth {
+                break
+            }
+            
+            if local.name.lexeme == name {
+                throw CompilerError.variableRedeclaration(name)
+            }
         }
     }
 }

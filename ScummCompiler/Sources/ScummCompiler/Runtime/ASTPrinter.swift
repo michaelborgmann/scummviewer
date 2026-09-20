@@ -208,4 +208,16 @@ extension ASTPrinter: StatementVisitor {
     func visitExpressionStmt(_ stmt: ExpressionStmt) throws -> String {
         try parenthesize(name: ";", expressions: stmt.expression)
     }
+    
+    func visitBlockStmt(_ stmt: BlockStatement) throws -> String {
+        var result = "(block"
+        
+        try stmt.statements.forEach { statement in
+            result += try statement.accept(visitor: self)
+        }
+        
+        result += ")"
+        
+        return result
+    }
 }

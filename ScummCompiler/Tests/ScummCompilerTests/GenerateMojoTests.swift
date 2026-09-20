@@ -320,7 +320,7 @@ final class GenerateMojoTests: XCTestCase {
         codeGenerator = GenerateMojo(with: Chunk())
         let chunk = try codeGenerator?.generateByteCode(statements: [statement])
         
-        XCTAssertEqual(chunk?.code, [MojoOpcode.get.rawValue, 0, MojoOpcode.pop.rawValue])
+        XCTAssertEqual(chunk?.code, [MojoOpcode.getGlobal.rawValue, 0, MojoOpcode.pop.rawValue])
         XCTAssertEqual(chunk?.lines, [1, 1, 1])
     }
     
@@ -335,7 +335,7 @@ final class GenerateMojoTests: XCTestCase {
         codeGenerator = GenerateMojo(with: Chunk())
         let chunk = try codeGenerator?.generateByteCode(statements: [statement])
         
-        XCTAssertEqual(chunk?.code, [MojoOpcode.constant.rawValue, 0, MojoOpcode.set.rawValue, 1, MojoOpcode.pop.rawValue])
+        XCTAssertEqual(chunk?.code, [MojoOpcode.constant.rawValue, 0, MojoOpcode.setGlobal.rawValue, 1, MojoOpcode.pop.rawValue])
         XCTAssertEqual(chunk?.lines, [1, 1, 1, 1, 1])
     }
     
@@ -362,7 +362,7 @@ final class GenerateMojoTests: XCTestCase {
         let chunk = try codeGenerator?.generateByteCode(statements: [varStmt])
         
         XCTAssertEqual(chunk?.code, [
-            MojoOpcode.constant.rawValue, 1, MojoOpcode.global.rawValue, 0
+            MojoOpcode.constant.rawValue, 1, MojoOpcode.defineGlobal.rawValue, 0
         ])
         XCTAssertEqual(chunk?.lines, [1, 1, 1, 1])
     }
@@ -379,8 +379,8 @@ final class GenerateMojoTests: XCTestCase {
         let chunk = try codeGenerator?.generateByteCode(statements: [varStmt, assignStmt])
         
         XCTAssertEqual(chunk?.code, [
-            MojoOpcode.constant.rawValue, 1, MojoOpcode.global.rawValue, 0,
-            MojoOpcode.constant.rawValue, 2, MojoOpcode.set.rawValue, 3, MojoOpcode.pop.rawValue
+            MojoOpcode.constant.rawValue, 1, MojoOpcode.defineGlobal.rawValue, 0,
+            MojoOpcode.constant.rawValue, 2, MojoOpcode.setGlobal.rawValue, 3, MojoOpcode.pop.rawValue
         ])
         XCTAssertEqual(chunk?.lines, [1, 1, 1, 1, 2, 2, 2, 2, 2])
     }
@@ -397,10 +397,259 @@ final class GenerateMojoTests: XCTestCase {
         let chunk = try codeGenerator?.generateByteCode(statements: [varStmt, printStmt])
         
         XCTAssertEqual(chunk?.code, [
-            MojoOpcode.constant.rawValue, 1, MojoOpcode.global.rawValue, 0,
-            MojoOpcode.get.rawValue, 2, MojoOpcode.print.rawValue
+            MojoOpcode.constant.rawValue, 1, MojoOpcode.defineGlobal.rawValue, 0,
+            MojoOpcode.getGlobal.rawValue, 2, MojoOpcode.print.rawValue
         ])
         XCTAssertEqual(chunk?.lines, [1, 1, 1, 1, 2, 2, 2])
     }
+    
+    func testBeginScopeIncrementsScopeDepth() {
+        
+        XCTAssertEqual(codeGenerator?.scopeDepth, 0)
+        
+        codeGenerator?.beginScope()
+        
+        XCTAssertEqual(codeGenerator?.scopeDepth, 1)
+    }
+    
+    func testEndScopeDecreasesScopeDepth() throws {
+        
+        codeGenerator?.beginScope()
+        
+        try codeGenerator?.endScope()
+        
+        XCTAssertEqual(codeGenerator?.scopeDepth, 0)
+    }
+    
+    func testLocalsAreProperlyManagedAcrossScopeTransitions() throws {
+        
+        let token1 = Token(type: .identifier, lexeme: "var1", line: 1)
+        codeGenerator?.locals.append(BaseCodeGenerator.Local(name: token1, depth: codeGenerator?.scopeDepth))
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 1)
+        
+        codeGenerator?.beginScope()
+        let token2 = Token(type: .identifier, lexeme: "var2", line: 1)
+        codeGenerator?.locals.append(BaseCodeGenerator.Local(name: token2, depth: codeGenerator?.scopeDepth))
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 2)
+        
+        codeGenerator?.line = token2.line
+        try codeGenerator?.endScope()
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 1)
+        XCTAssertEqual(codeGenerator?.locals.last?.name.lexeme, "var1")
+    }
+    
+    func testVisitBlockStmtManagesScope() throws {
+        
+        let blockStmt = BlockStatement(statements: [/* some test statements */])
+        
+        XCTAssertEqual(codeGenerator?.scopeDepth, 0)
+        
+        try codeGenerator?.visitBlockStmt(blockStmt)
+        
+        XCTAssertEqual(codeGenerator?.scopeDepth, 0) // final scope depth
+    }
+    
+    func testVisitBlockStmtExecutesStatements() throws {
+        
+        let define = Token(type: .identifier, lexeme: "myVar", line: 1)
+        let initializer = LiteralExpression(value: 42, token: define)
+        let varStmt = VariableStatement(name: define, initializer: initializer)
+        let blockStmt = BlockStatement(statements: [varStmt])
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 0)
+        
+        try? codeGenerator?.visitBlockStmt(blockStmt)
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 0)
+        XCTAssertEqual(codeGenerator?.scopeDepth, 0)
+    }
+    
+    func testLocalVariableDeclaration() throws {
+        
+        let define = Token(type: .identifier, lexeme: "localVar", line: 1)
+        let varStmt = VariableStatement(name: define, initializer: nil)
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 0)
+        
+        try codeGenerator?.handleLocalVariableDeclaration(statement: varStmt)
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 1)
+        XCTAssertEqual(codeGenerator?.locals.last?.name.lexeme, "localVar")
+        XCTAssertEqual(codeGenerator?.locals.last?.depth, codeGenerator?.scopeDepth)
+    }
+    
+    func testLocalVariableInitialization() throws {
+        
+        let token = Token(type: .identifier, lexeme: "localVar", line: 1)
+        let initializer = LiteralExpression(value: 42)
+        let varStmt = VariableStatement(name: token, initializer: initializer)
+        codeGenerator?.line = token.line
 
+        try codeGenerator?.handleLocalVariableDeclaration(statement: varStmt)
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 1)
+        XCTAssertEqual(codeGenerator?.locals.last?.name.lexeme, "localVar")
+        XCTAssertEqual(codeGenerator?.locals.last?.depth, codeGenerator?.scopeDepth)
+    }
+    
+    func testLocalVariableRedeclarationThrowsError() throws {
+        
+        let define = Token(type: .identifier, lexeme: "duplicateVar", line: 1)
+        let varStmt1 = VariableStatement(name: define, initializer: nil)
+        let varStmt2 = VariableStatement(name: define, initializer: nil)
+
+        try codeGenerator?.handleLocalVariableDeclaration(statement: varStmt1)
+        
+        XCTAssertThrowsError(try codeGenerator?.handleLocalVariableDeclaration(statement: varStmt2)) { error in
+            guard let compilerError = error as? CompilerError else {
+                return XCTFail("Expected CompilerError.variableRedeclaration")
+            }
+            if case .variableRedeclaration(let name) = compilerError {
+                XCTAssertEqual(name, "duplicateVar")
+            } else {
+                XCTFail("Incorrect error type")
+            }
+        }
+    }
+    
+    func testLocalVariableScopeIsolation() throws {
+        
+        let tokenOuter = Token(type: .identifier, lexeme: "outerVar", line: 1)
+        let varStmtOuter = VariableStatement(name: tokenOuter, initializer: nil)
+
+        let tokenInner = Token(type: .identifier, lexeme: "innerVar", line: 2)
+        let varStmtInner = VariableStatement(name: tokenInner, initializer: nil)
+
+        try codeGenerator?.handleLocalVariableDeclaration(statement: varStmtOuter)
+        
+        codeGenerator?.beginScope()
+        try codeGenerator?.handleLocalVariableDeclaration(statement: varStmtInner)
+        XCTAssertEqual(codeGenerator?.locals.count, 2)
+
+        codeGenerator?.line = tokenInner.line
+        try? codeGenerator?.endScope()
+
+        XCTAssertFalse(codeGenerator!.locals.contains { $0.name.lexeme == "innerVar" })
+    }
+    
+    func testLocalVariableShadowing() throws {
+        
+        let outerToken = Token(type: .identifier, lexeme: "a", line: 1)
+        let outerVarStmt = VariableStatement(name: outerToken, initializer: LiteralExpression(value: "outer"))
+        
+        let innerToken = Token(type: .identifier, lexeme: "a", line: 2)
+        let innerVarStmt = VariableStatement(name: innerToken, initializer: LiteralExpression(value: "inner"))
+        
+        codeGenerator?.line = outerToken.line
+        try codeGenerator?.handleLocalVariableDeclaration(statement: outerVarStmt)
+        XCTAssertEqual(codeGenerator?.locals.count, 1)
+        XCTAssertEqual(codeGenerator?.locals.last?.name.lexeme, "a")
+        
+        codeGenerator?.beginScope()
+        
+        codeGenerator?.line = innerToken.line
+        try codeGenerator?.handleLocalVariableDeclaration(statement: innerVarStmt)
+        XCTAssertEqual(codeGenerator?.locals.count, 2)
+        XCTAssertEqual(codeGenerator?.locals.last?.name.lexeme, "a")
+        
+        try? codeGenerator?.endScope()
+        
+        XCTAssertEqual(codeGenerator?.locals.count, 1)
+        XCTAssertEqual(codeGenerator?.locals.last?.name.lexeme, "a")
+    }
+    
+    func testVisitVariableExpr_LocalVariable() throws {
+        
+        let token = Token(type: .identifier, lexeme: "localVar", line: 1)
+        let varStmt = VariableStatement(name: token, initializer: LiteralExpression(value: 42))
+        
+        codeGenerator?.line = token.line
+        try codeGenerator?.handleLocalVariableDeclaration(statement: varStmt)
+        
+        let varExpr = VariableExpression(name: token)
+        
+        XCTAssertNoThrow(try codeGenerator?.visitVariableExpr(varExpr))
+    }
+    
+    func testVisitVariableExpr_GlobalVariable() throws {
+        
+        let token = Token(type: .identifier, lexeme: "globalVar", line: 1)
+        let varStmt = VariableStatement(name: token, initializer: LiteralExpression(value: 42))
+        
+        codeGenerator?.line = token.line
+        try codeGenerator?.handleGlobalVariableDeclaration(statement: varStmt)
+        
+        let varExpr = VariableExpression(name: token)
+        
+        XCTAssertNoThrow(try codeGenerator?.visitVariableExpr(varExpr))
+    }
+    
+    func testVisitVariableExpr_AccessInOwnInitializer() throws {
+        
+        let token = Token(type: .identifier, lexeme: "localVar", line: 1)
+        let varStmt = VariableStatement(name: token, initializer: VariableExpression(name: token))
+        
+        XCTAssertThrowsError(try codeGenerator?.handleLocalVariableDeclaration(statement: varStmt)) { error in
+            guard let compilerError = error as? CompilerError else {
+                return XCTFail("Expected CompilerError.variableAccessInOwnInitializer")
+            }
+            if case .variableAccessInOwnInitializer(let name) = compilerError {
+                XCTAssertEqual(name, "localVar")
+            } else {
+                XCTFail("Incorrect error type")
+            }
+        }
+    }
+    
+    func testVisitAssignExpr_LocalVariable() throws {
+        
+        let token = Token(type: .identifier, lexeme: "localVar", line: 1)
+        let varStmt = VariableStatement(name: token, initializer: LiteralExpression(value: 42))
+        
+        codeGenerator?.line = token.line
+        try codeGenerator?.handleLocalVariableDeclaration(statement: varStmt)
+        
+        let assignExpr = AssignExpression(name: token, value: LiteralExpression(value: 100))
+        
+        XCTAssertNoThrow(try codeGenerator?.visitAssignExpr(assignExpr))
+    }
+    
+    func testVisitAssignExpr_GlobalVariable() throws {
+        
+        let token = Token(type: .identifier, lexeme: "globalVar", line: 1)
+        let varStmt = VariableStatement(name: token, initializer: LiteralExpression(value: 42))
+        
+        codeGenerator?.line = token.line
+        try codeGenerator?.handleGlobalVariableDeclaration(statement: varStmt)
+        
+        let assignExpr = AssignExpression(name: token, value: LiteralExpression(value: 100))
+        
+        XCTAssertNoThrow(try codeGenerator?.visitAssignExpr(assignExpr))
+    }
+    
+    func testVisitAssignExpr_MissingOperand() throws {
+        
+        let token = Token(type: .identifier, lexeme: "localVar", line: 1)
+        let varStmt = VariableStatement(name: token, initializer: LiteralExpression(value: 42))
+        
+        codeGenerator?.line = token.line
+        try codeGenerator?.handleLocalVariableDeclaration(statement: varStmt)
+        
+        let assignExpr = AssignExpression(name: token, value: nil)
+        
+        XCTAssertThrowsError(try codeGenerator?.visitAssignExpr(assignExpr)) { error in
+            guard let compilerError = error as? CompilerError else {
+                return XCTFail("Expected CompilerError.missingOperand")
+            }
+            if case .missingOperand(let type, let line) = compilerError {
+                XCTAssertEqual(type, "assignment")
+                XCTAssertEqual(line, 1)
+            } else {
+                XCTFail("Incorrect error type")
+            }
+        }
+    }
 }

@@ -1,0 +1,17 @@
+var beverage = "cafe au lait";
+var breakfast = "beignets with " + beverage;
+print breakfast;
+
+var breakfast = "beignets";
+var beverage = "cafe au lait";
+breakfast = "beignets with " + beverage;
+
+print breakfast;
+
+var x;
+x = 10;
+print x;
+var y = 20;
+print 20;
+x = 30;
+print x + y;

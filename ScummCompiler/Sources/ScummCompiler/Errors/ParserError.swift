@@ -46,6 +46,12 @@ enum ParserError: LocalizedError, Equatable {
     ///   - line: The line number where the variable name is expected.
     case missingVariable(line: Int)
     
+    /// An error indicating that a closing brace is missing in the source code.
+    ///
+    /// - Parameters:
+    ///   - line: The line number in the source code where the missing closing brace was expected.
+    case missingClosingBraces(line: Int)
+    
     /// A human-readable description of the error.
     var errorDescription: String? {
         
@@ -68,6 +74,9 @@ enum ParserError: LocalizedError, Equatable {
             
         case .missingBracket:
             return "Missing Bracket"
+            
+        case .missingClosingBraces:
+            return "Missing Clsing Braces"
         }
     }
     
@@ -93,6 +102,9 @@ enum ParserError: LocalizedError, Equatable {
             
         case .missingBracket(let line):
             return "A bracket (either '(' or ')') is missing at line \(line)."
+            
+        case .missingClosingBraces(let line):
+            return "Closing braces`}` of code block is missing at line \(line)."
         }
     }
     
@@ -118,6 +130,9 @@ enum ParserError: LocalizedError, Equatable {
             
         case .missingBracket:
             return "Ensure that all brackets are correctly paired and closed."
+            
+        case .missingClosingBraces:
+            return "Ensure that the scope of the code block is correctly paired and closed."
         }
     }
 }

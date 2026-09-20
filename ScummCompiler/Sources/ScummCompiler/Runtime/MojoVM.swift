@@ -158,7 +158,7 @@ extension MojoVM {
         case .pop:
             _ = try pop()
             
-        case .global:
+        case .defineGlobal:
             
             let index = try Int(readNextByte())
             
@@ -169,7 +169,7 @@ extension MojoVM {
             globals[constant] = peek(0)
             _ = try pop()
             
-        case .get:
+        case .getGlobal:
             
             let index = try Int(readNextByte())
             
@@ -183,7 +183,7 @@ extension MojoVM {
             
             try push(value: value)
             
-        case .set:
+        case .setGlobal:
             
             let index = try Int(readNextByte())
             
@@ -197,6 +197,21 @@ extension MojoVM {
             } else {
                 globals[constant] = peek(0)
             }
+            
+        case .getLocal:
+            
+            let slot = try Int(readNextByte())
+            
+            guard let constant = stack[slot] else {
+                fatalError()
+            }
+            
+            try push(value: constant)
+            
+        case .setLocal:
+            
+            let slot = try Int(readNextByte())
+            stack[slot] = peek(0)
         }
     }
     

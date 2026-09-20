@@ -11,7 +11,7 @@ import XCTest
 final class OpcodeTests: XCTestCase {
     
     func testExistingMojoOpcodes() throws {
-        XCTAssertTrue(MojoOpcode.allCases.count == 19)
+        XCTAssertTrue(MojoOpcode.allCases.count == 21)
         XCTAssertTrue(MojoOpcode.allCases.contains(.add))
         XCTAssertTrue(MojoOpcode.allCases.contains(.subtract))
         XCTAssertTrue(MojoOpcode.allCases.contains(.multiply))
@@ -29,9 +29,11 @@ final class OpcodeTests: XCTestCase {
         
         XCTAssertTrue(MojoOpcode.allCases.contains(.print))
         XCTAssertTrue(MojoOpcode.allCases.contains(.pop))
-        XCTAssertTrue(MojoOpcode.allCases.contains(.global))
-        XCTAssertTrue(MojoOpcode.allCases.contains(.get))
-        XCTAssertTrue(MojoOpcode.allCases.contains(.set))
+        XCTAssertTrue(MojoOpcode.allCases.contains(.defineGlobal))
+        XCTAssertTrue(MojoOpcode.allCases.contains(.getGlobal))
+        XCTAssertTrue(MojoOpcode.allCases.contains(.setGlobal))
+        XCTAssertTrue(MojoOpcode.allCases.contains(.getLocal))
+        XCTAssertTrue(MojoOpcode.allCases.contains(.setLocal))
     }
     
     func testExistingScummOpcodes() throws {

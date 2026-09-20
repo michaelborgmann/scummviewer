@@ -9,23 +9,23 @@ import XCTest
 @testable import ScummCompiler
 
 class DecentParserTests: XCTestCase {
-
+    
     class MockVisitor: ExpressionVisitor {
-
+        
         var visitedExpressions: [ScummCompiler.Expression] = []
-
+        
         func visitBinaryExpr(_ expression: BinaryExpression) throws {
             visitedExpressions.append(expression)
         }
-
+        
         func visitGroupingExpr(_ expression: GroupingExpession) throws {
             visitedExpressions.append(expression)
         }
-
+        
         func visitLiteralExpr(_ expression: LiteralExpression) throws {
             visitedExpressions.append(expression)
         }
-
+        
         func visitUnaryExpr(_ expression: UnaryExpression) throws {
             visitedExpressions.append(expression)
         }
@@ -40,17 +40,17 @@ class DecentParserTests: XCTestCase {
     }
     
     func testParseExpression() throws {
-
+        
         let source = "1 + 2 * 3"
-
+        
         let scanner = Scanner(source: source)
         let tokens = try scanner.scanAllTokens()
         let parser = DecentParser(tokens: tokens)
         let abstractSyntaxTree: ScummCompiler.Expression = try parser.parse()
-
+        
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if
@@ -72,19 +72,19 @@ class DecentParserTests: XCTestCase {
     }
     
     func testParseComplexExpression() throws {
-
+        
         let source = "(-1 + 2) * 3 - -4"
-
+        
         let scanner = Scanner(source: source)
         let tokens = try scanner.scanAllTokens()
         let parser = DecentParser(tokens: tokens)
         let abstractSyntaxTree: ScummCompiler.Expression = try parser.parse()
-
+        
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
-
+        
         if
             let subtraction = abstractSyntaxTree as? BinaryExpression,
             let multiplication = subtraction.left as? BinaryExpression,
@@ -107,7 +107,7 @@ class DecentParserTests: XCTestCase {
             XCTAssertNotNil(grouping.expression)
             XCTAssertEqual(multiplication.operatorToken.type, .star)
             XCTAssertEqual(subtraction.operatorToken.type, .minus)
-
+            
         } else {
             XCTFail("Cannot unwrap expression")
         }
@@ -124,7 +124,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let boolean = abstractSyntaxTree as? LiteralExpression {
@@ -145,7 +145,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let boolean = abstractSyntaxTree as? LiteralExpression {
@@ -166,7 +166,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let boolean = abstractSyntaxTree as? LiteralExpression {
@@ -187,7 +187,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let literal = abstractSyntaxTree as? LiteralExpression {
@@ -209,7 +209,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if
@@ -234,7 +234,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let literal = abstractSyntaxTree as? LiteralExpression {
@@ -255,7 +255,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let unary = abstractSyntaxTree as? UnaryExpression,
@@ -278,7 +278,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let literal = abstractSyntaxTree as? LiteralExpression {
@@ -299,7 +299,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let binary = abstractSyntaxTree as? BinaryExpression,
@@ -324,7 +324,7 @@ class DecentParserTests: XCTestCase {
         
         let mockVisitor = MockVisitor()
         try abstractSyntaxTree.accept(visitor: mockVisitor)
-
+        
         XCTAssertEqual(mockVisitor.visitedExpressions.count, 1)
         
         if let binary = abstractSyntaxTree as? BinaryExpression,
@@ -347,7 +347,7 @@ class DecentParserTests: XCTestCase {
         let parser = DecentParser(tokens: tokens)
         
         let statements: [ScummCompiler.Statement] = try parser.parse()
-
+        
         XCTAssertEqual(statements.count, 1)
         if let variableStmt = statements.first as? VariableStatement {
             XCTAssertEqual(variableStmt.name.lexeme, "x")
@@ -364,13 +364,13 @@ class DecentParserTests: XCTestCase {
     func testParseValidAssignment() throws {
         
         let source = "var x = 10; x = 20;"
-
+        
         let scanner = Scanner(source: source)
         let tokens = try scanner.scanAllTokens()
         let parser = DecentParser(tokens: tokens)
         
         let statements: [ScummCompiler.Statement] = try parser.parse()
-
+        
         XCTAssertEqual(statements.count, 2)
         
         if let firstStatement = statements.first as? VariableStatement {
@@ -381,7 +381,7 @@ class DecentParserTests: XCTestCase {
         }
         
         if let secondStatement = statements.last as? ExpressionStmt,
-            let assignment = secondStatement.expression as? AssignExpression {
+           let assignment = secondStatement.expression as? AssignExpression {
             XCTAssertEqual(assignment.name.lexeme, "x")
             if let value = assignment.value as? LiteralExpression {
                 XCTAssertEqual(value.value as? Int, 20)
@@ -392,11 +392,11 @@ class DecentParserTests: XCTestCase {
     func testParseSynchronization() throws {
         
         let source = "10 = x; print \"synced\";"
-
+        
         let scanner = Scanner(source: source)
         let tokens = try scanner.scanAllTokens()
         let parser = DecentParser(tokens: tokens)
-
+        
         let statements: [ScummCompiler.Statement] = try parser.parse()
         
         XCTAssertEqual(statements.count, 1)
@@ -440,7 +440,7 @@ class DecentParserTests: XCTestCase {
     func testParseMissingSemicolon() throws {
         
         let source = "var x = 10"
-
+        
         let scanner = Scanner(source: source)
         let tokens = try scanner.scanAllTokens()
         let parser = DecentParser(tokens: tokens)
@@ -459,13 +459,13 @@ class DecentParserTests: XCTestCase {
     func testParseMissingVariableName() throws {
         
         let source = "var = 10;"
-
+        
         let scanner = Scanner(source: source)
         let tokens = try scanner.scanAllTokens()
         let parser = DecentParser(tokens: tokens)
         
         let statements: [ScummCompiler.Statement] = try parser.parse()
-
+        
         XCTAssertEqual(statements.count, 0)
         XCTAssertEqual(parser.collectedErrors?.count, 1)
         if let error = parser.collectedErrors?.first as? ParserError {
@@ -473,5 +473,123 @@ class DecentParserTests: XCTestCase {
         } else {
             XCTFail("Expected ParserError.missingVariable")
         }
+    }
+    
+    func testEmptyBlock() throws {
+        
+        let source = "{}"
+        
+        let scanner = Scanner(source: source)
+        let tokens = try scanner.scanAllTokens()
+        let parser = DecentParser(tokens: tokens)
+        
+        let statements: [ScummCompiler.Statement] = try parser.parse()
+        
+        XCTAssertEqual(statements.count, 1, "Expected a single block statement.")
+        XCTAssertTrue(statements.first is BlockStatement, "Expected statement to be a BlockStatement.")
+        
+        if let blockStmt = statements.first as? BlockStatement {
+            XCTAssertTrue(blockStmt.statements.isEmpty, "Expected block to have no inner statements.")
+        }
+    }
+    
+    func testBlockWithOneStatement() throws {
+        
+        let source = "{ var a = 10; }"
+        
+        let scanner = Scanner(source: source)
+        let tokens = try scanner.scanAllTokens()
+        let parser = DecentParser(tokens: tokens)
+        
+        let statements: [ScummCompiler.Statement] = try parser.parse()
+        
+        XCTAssertEqual(statements.count, 1, "Expected a single block statement.")
+        
+        if let blockStmt = statements.first as? BlockStatement {
+            XCTAssertEqual(blockStmt.statements.count, 1, "Expected one statement inside the block.")
+            
+            if let varStmt = blockStmt.statements.first as? VariableStatement {
+                XCTAssertEqual(varStmt.name.lexeme, "a", "Variable name should be 'a'.")
+            } else {
+                XCTFail("Expected first statement to be a VariableStatement.")
+            }
+        } else {
+            XCTFail("Expected statement to be a BlockStatement.")
+        }
+    }
+    
+    func testBlockWithMultipleStatements() throws {
+        let source = """
+        {
+            var a = 10;
+            var b = 20;
+        }
+        """
+        
+        let scanner = Scanner(source: source)
+        let tokens = try scanner.scanAllTokens()
+        let parser = DecentParser(tokens: tokens)
+        
+        let statements: [ScummCompiler.Statement] = try parser.parse()
+        
+        XCTAssertEqual(statements.count, 1, "Expected a single block statement.")
+        
+        if let blockStmt = statements.first as? BlockStatement {
+            XCTAssertEqual(blockStmt.statements.count, 2, "Expected two statements inside the block.")
+            
+            XCTAssertTrue(blockStmt.statements[0] is VariableStatement, "Expected first statement to be a VariableStatement.")
+            XCTAssertTrue(blockStmt.statements[1] is VariableStatement, "Expected second statement to be a VariableStatement.")
+        } else {
+            XCTFail("Expected statement to be a BlockStatement.")
+        }
+    }
+    
+    func testNestedBlocks() throws {
+        let source = """
+        {
+            var a = 10;
+            {
+                var b = 20;
+            }
+        }
+        """
+        
+        let scanner = Scanner(source: source)
+        let tokens = try scanner.scanAllTokens()
+        let parser = DecentParser(tokens: tokens)
+        
+        let statements: [ScummCompiler.Statement] = try parser.parse()
+        
+        XCTAssertEqual(statements.count, 1, "Expected a single outer block statement.")
+        
+        if let outerBlock = statements.first as? BlockStatement {
+            XCTAssertEqual(outerBlock.statements.count, 2, "Expected two statements in the outer block.")
+            
+            XCTAssertTrue(outerBlock.statements[0] is VariableStatement, "Expected first statement to be a VariableStatement.")
+            
+            if let innerBlock = outerBlock.statements[1] as? BlockStatement {
+                XCTAssertEqual(innerBlock.statements.count, 1, "Expected one statement inside the nested block.")
+                XCTAssertTrue(innerBlock.statements[0] is VariableStatement, "Expected nested block to contain a VariableStatement.")
+            } else {
+                XCTFail("Expected second statement to be a nested BlockStatement.")
+            }
+        } else {
+            XCTFail("Expected statement to be an outer BlockStatement.")
+        }
+    }
+    
+    func testUnclosedBlockThrowsError() throws {
+        
+        let source = "{ var a = 10;"
+        
+        let scanner = Scanner(source: source)
+        let tokens = try scanner.scanAllTokens()
+        let parser = DecentParser(tokens: tokens)
+        
+        
+        let _: [ScummCompiler.Statement] = try parser.parse()
+        
+        XCTAssertEqual(parser.collectedErrors?.count, 1)
+        XCTAssertTrue(parser.collectedErrors?.first is ParserError)
     }
 }

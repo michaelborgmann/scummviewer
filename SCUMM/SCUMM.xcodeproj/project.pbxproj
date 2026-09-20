@@ -32,6 +32,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4C0441FD2D60D66800F8936D /* strings.scu */ = {isa = PBXFileReference; lastKnownFileType = text; path = strings.scu; sourceTree = "<group>"; };
+		4C0441FF2D60D8F500F8936D /* print.scu */ = {isa = PBXFileReference; lastKnownFileType = text; path = print.scu; sourceTree = "<group>"; };
+		4C0442012D60D99E00F8936D /* globalvars.scu */ = {isa = PBXFileReference; lastKnownFileType = text; path = globalvars.scu; sourceTree = "<group>"; };
+		4C0442022D60DA2700F8936D /* localvars.scu */ = {isa = PBXFileReference; lastKnownFileType = text; path = localvars.scu; sourceTree = "<group>"; };
+		4C0574B02D636F2E00BE6AAC /* scope.scu */ = {isa = PBXFileReference; lastKnownFileType = text; path = scope.scu; sourceTree = "<group>"; };
 		4C1E3BD72CE11AE9006EA564 /* playground.scu */ = {isa = PBXFileReference; lastKnownFileType = text; path = playground.scu; sourceTree = "<group>"; };
 		4C64AFC12B48053700AA11EE /* Options.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Options.swift; sourceTree = "<group>"; };
 		4C64AFC32B4805FD00AA11EE /* CommandLine+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CommandLine+Ext.swift"; sourceTree = "<group>"; };
@@ -83,6 +88,11 @@
 				4C6826BF2CE92557009369C8 /* Statements.md */,
 				4C9B23892B44480400E3BE33 /* helloworld.scu */,
 				4C1E3BD72CE11AE9006EA564 /* playground.scu */,
+				4C0441FD2D60D66800F8936D /* strings.scu */,
+				4C0441FF2D60D8F500F8936D /* print.scu */,
+				4C0442012D60D99E00F8936D /* globalvars.scu */,
+				4C0442022D60DA2700F8936D /* localvars.scu */,
+				4C0574B02D636F2E00BE6AAC /* scope.scu */,
 				4CB5668D2CEC0E0300C4DE1B /* statements.scu */,
 				4C9B238A2B44506A00E3BE33 /* tokens.scu */,
 				4CE09B5A2B46168700207CDD /* SCUMM University */,

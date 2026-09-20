@@ -29,7 +29,6 @@ protocol StatementVisitor {
     /// - Returns: The result of the operation.
     func visitPrintStmt(_ stmt: Print) throws -> StatementReturnType
     
-    
     /// Visits an expression statement node.
     ///
     /// - Parameter stmt: The expression statement to visit.
@@ -41,6 +40,12 @@ protocol StatementVisitor {
     /// - Parameter stmt: The variable statement to visit.
     /// - Returns: The result of the operation.
     func visitVarStmt(_ stmt: VariableStatement) throws -> StatementReturnType
+
+    /// Visits a block statement node.
+    ///
+    /// - Parameter stmt: The block statement to visit.
+    /// - Returns: The result of the operation.
+    func visitBlockStmt(_ stmt: BlockStatement) throws -> StatementReturnType
 }
 
 /// Protocol representing a statement in an abstract syntax tree (AST).
@@ -131,5 +136,28 @@ struct VariableStatement: Statement {
     /// - Throws: An error if the visitor encounters an issue during the operation.
     func accept<V, R>(visitor: V) throws -> R where V : StatementVisitor, R == V.StatementReturnType {
         try visitor.visitVarStmt(self)
+    }
+}
+
+/// Represents a block statement in the abstract syntax tree.
+///
+/// A block statement is a sequence of statements enclosed within `{}`.
+/// It defines a new scope for variables and controls the execution of multiple statements as a single unit.
+///
+/// - Properties:
+///   - statements: An array of statements contained within the block.
+struct BlockStatement: Statement {
+    
+    /// The statements contained within the block.
+    let statements: [Statement]
+    
+    /// Accepts a visitor to perform operations on the block statement.
+    ///
+    /// - Parameters:
+    ///   - visitor: The visitor implementing the `StatementVisitor` protocol.
+    /// - Returns: The result of the visitor's operation.
+    /// - Throws: An error if the visitor encounters an issue during the operation.
+    func accept<V, R>(visitor: V) throws -> R where V : StatementVisitor, R == V.StatementReturnType {
+        try visitor.visitBlockStmt(self)
     }
 }

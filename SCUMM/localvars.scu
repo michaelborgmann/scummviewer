@@ -1,0 +1,15 @@
+{
+    var a = 1 + 2;
+    var b = 4;
+}
+
+var a = "global a";
+{
+  var a = "outer a";
+  {
+    var a = "inner a";
+    print a;
+  }
+  print a;
+}
+print a;
