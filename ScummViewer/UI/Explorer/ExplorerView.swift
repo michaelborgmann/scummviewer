@@ -22,7 +22,10 @@ struct ExplorerView: View {
         .inspector(isPresented: $isInspectorPresented) {
             InspectorView()
         }
-        .navigationSplitViewStyle(.balanced)
+        .focusedSceneValue(
+            \.explorerViewModel,
+            viewModel
+        )
         .toolbar {
             
             ToolbarItem(placement: .primaryAction) {

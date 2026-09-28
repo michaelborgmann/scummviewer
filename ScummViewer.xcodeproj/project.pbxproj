@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4CBC0F5B306ACAB10038B7A7 /* ScummCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4CBC0F5A306ACAB10038B7A7 /* ScummCore */; };
 		4CD08415306AC43600C199EC /* ScummCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4CD08414306AC43600C199EC /* ScummCore */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4CD08415306AC43600C199EC /* ScummCore in Frameworks */,
+				4CBC0F5B306ACAB10038B7A7 /* ScummCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = ScummViewer;
 			packageProductDependencies = (
 				4CD08414306AC43600C199EC /* ScummCore */,
+				4CBC0F5A306ACAB10038B7A7 /* ScummCore */,
 			);
 			productName = ScummViewer;
 			productReference = 4CCAE45F2EFB001B00F3BA6E /* ScummViewer.app */;
@@ -101,6 +104,7 @@
 			mainGroup = 4CCAE4562EFB001B00F3BA6E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				4CBC0F59306ACAB10038B7A7 /* XCLocalSwiftPackageReference "../../VicentinaStudios/scummkit/ScummCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4CCAE4602EFB001B00F3BA6E /* Products */;
@@ -340,7 +344,18 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		4CBC0F59306ACAB10038B7A7 /* XCLocalSwiftPackageReference "../../VicentinaStudios/scummkit/ScummCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../VicentinaStudios/scummkit/ScummCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		4CBC0F5A306ACAB10038B7A7 /* ScummCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ScummCore;
+		};
 		4CD08414306AC43600C199EC /* ScummCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ScummCore;

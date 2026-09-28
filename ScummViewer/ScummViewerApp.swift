@@ -13,5 +13,12 @@ struct ScummViewerApp: App {
         WindowGroup {
             ContentView()
         }
+        .commands {
+            ExplorerCommands()
+
+            SidebarCommands()
+            InspectorCommands()
+            ToolbarCommands()
+        }
     }
 }
